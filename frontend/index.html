@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Loan Eligibility Engine</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+background:#9abbdb;
+}
+</style>
+
+</head>
+
+<body class="min-h-screen flex items-center justify-center">
+
+<div class="bg-white shadow-xl rounded-md p-10 min-w-[440px]">
+
+<h1 class="text-5xl font-semibold text-gray-800 mb-2">
+Loan Eligibility Engine
+</h1>
+
+<p class="text-gray-500 text-md text-lg text-center  mt-6 mb-6">
+Upload a CSV containing user financial profiles
+</p>
+
+<div id="dropArea"
+class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition">
+
+<p class="text-gray-500 text-sm">
+Drag & drop CSV here
+</p>
+
+<p class="text-gray-400 text-xs mt-1">
+or click to select file
+</p>
+
+<input type="file" id="fileInput" accept=".csv" class="hidden"/>
+
+</div>
+
+<div id="fileName" class="text-sm text-gray-600 mt-4"></div>
+
+<button
+onclick="uploadFile()"
+class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition">
+Upload CSV
+</button>
+
+<div id="status" class="mt-4 text-sm text-gray-600"></div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

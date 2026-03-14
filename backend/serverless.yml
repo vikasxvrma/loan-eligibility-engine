@@ -1,0 +1,237 @@
+service: loan-eligibility-engine
+
+frameworkVersion: "3"
+plugins:
+  - serverless-python-requirements
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+
+  httpApi:
+    cors: true
+  environment:
+    DB_HOST: ${env:DB_HOST}
+    DB_USER: ${env:DB_USER}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_NAME: ${env:DB_NAME}
+    DB_PORT: ${env:DB_PORT}
+    BUCKET_NAME: ${env:BUCKET_NAME}
+    LOAN_DISCOVERY_TOPIC_ARN:
+      Ref: LoanDiscoveryTopic
+    MATCH_TRIGGER_TOPIC_ARN:
+      Ref: MatchTriggerTopic
+    NOTIFICATION_TOPIC_ARN:
+      Ref: NotificationTopic
+    SES_FROM_EMAIL: ${env:SES_FROM_EMAIL}
+    SES_TO_EMAIL: ${env:SES_TO_EMAIL}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource:
+            - arn:aws:s3:::loan-eligibility-engine-vikas-uploads/*
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            - Ref: LoanDiscoveryTopic
+            - Ref: MatchTriggerTopic
+            - Ref: NotificationTopic
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: "*"
+
+functions:
+  listDecisions:
+    handler: handler.listDecisions
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+
+  describeUsers:
+    handler: migrate.describeUsers
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+
+  listUsers:
+    handler: handler.listUsers
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+
+  hello:
+    handler: handler.hello
+
+  migrate:
+    handler: migrate.run
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+
+  tables:
+    handler: handler.tables
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+
+  ingest:
+    handler: processUploadedCSV.handler
+    timeout: 15
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+    events:
+      - s3:
+          bucket: loan-eligibility-engine-vikas-uploads
+          event: s3:ObjectCreated:*
+          existing: true
+
+  uploadUrl:
+    handler: generateUploadUrl.handler
+    events:
+      - httpApi:
+          path: /upload
+          method: post
+
+  evaluateBatch:
+    handler: evaluateBatch.handler
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+    events:
+      - httpApi:
+          path: /evaluate-batch
+          method: post
+  discoverLoans:
+    handler: discoverLoans.handler
+    runtime: python3.11
+    timeout: 30
+    events:
+      - schedule:
+          rate: cron(30 0 * * ? *)
+          input:
+            site_name: hdfc
+      - schedule:
+          rate: cron(35 0 * * ? *)
+          input:
+            site_name: icici
+  persistDiscoveredProducts:
+    handler: persistDiscoveredProducts.handler
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+    events:
+      - sns:
+          arn:
+            Ref: LoanDiscoveryTopic
+          topicName: loan-discovery-topic
+  matchUsersWithProducts:
+    handler: matchUsersWithProducts.handler
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+    events:
+      - sns:
+          arn:
+            Ref: MatchTriggerTopic
+          topicName: loan-match-trigger-topic
+  notifyUsers:
+    handler: notifyUsers.handler
+    timeout: 30
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+    events:
+      - sns:
+          arn:
+            Ref: NotificationTopic
+          topicName: loan-notification-topic
+  resetDatabase:
+    handler: resetDatabase.handler
+    vpc:
+      securityGroupIds:
+        - sg-05fe316b93849be70
+      subnetIds:
+        - subnet-0ad92b19b1600fbbb
+        - subnet-032c640de2eb1981b
+
+resources:
+  Resources:
+    LoanDiscoveryTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: loan-discovery-topic
+    MatchTriggerTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: loan-match-trigger-topic
+    NotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: loan-notification-topic
+
+    SNSEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        ServiceName: !Sub com.amazonaws.${AWS::Region}.sns
+        VpcId: vpc-0a35a620c1230a5eb
+        VpcEndpointType: Interface
+        PrivateDnsEnabled: true
+        SubnetIds:
+          - subnet-0ad92b19b1600fbbb
+        SecurityGroupIds:
+          - sg-05fe316b93849be70
+    SESVPCEndpoint:
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        ServiceName: !Sub com.amazonaws.${AWS::Region}.email
+        VpcId: vpc-0a35a620c1230a5eb
+        VpcEndpointType: Interface
+        PrivateDnsEnabled: true
+        SubnetIds:
+          - subnet-0ad92b19b1600fbbb
+        SecurityGroupIds:
+          - sg-05fe316b93849be70
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
