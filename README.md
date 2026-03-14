@@ -1,68 +1,160 @@
-<!--
-title: 'AWS NodeJS Example'
-description: 'This template demonstrates how to deploy a simple NodeJS function running on AWS Lambda using the Serverless Framework.'
-layout: Doc
-framework: v4
-platform: AWS
-language: nodeJS
-priority: 1
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, Inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+![AWS](https://img.shields.io/badge/AWS-Serverless-orange)
+![Node](https://img.shields.io/badge/Node.js-Backend-green)
+![Python](https://img.shields.io/badge/Python-Data-blue)
 
-# Serverless Framework AWS NodeJS Example
+ 
+ # 📊 Loan Eligibility Engine
 
-This template demonstrates how to deploy a simple NodeJS function running on AWS Lambda using the Serverless Framework. The deployed function does not include any event definitions or any kind of persistence (database). For more advanced configurations check out the [examples repo](https://github.com/serverless/examples/) which include use cases like API endpoints, workers triggered by SQS, persistence with DynamoDB, and scheduled tasks. For details about configuration of specific events, please refer to our [documentation](https://www.serverless.com/framework/docs/providers/aws/events/).
+A cloud-native serverless platform that ingests user financial data, discovers loan products, and matches eligible users with suitable financial offers.
 
-## Usage
+The system is built using AWS serverless infrastructure and demonstrates event-driven architecture, asynchronous pipelines, and scalable cloud services.
 
-### Deployment
+## 🚀 System Overview
 
-In order to deploy the example, you need to run the following command:
+The platform automates the process of:
 
+* Ingesting user financial data via CSV uploads
+
+* Discovering loan products from external sources
+
+* Matching users with eligible financial products
+
+* Notifying users via email
+
+This architecture separates data ingestion, product discovery, and user notification into independent pipelines.
+
+## 🏗 Architecture
+### User Ingestion Pipeline
+```
+Frontend (S3 Static Website)
+        ↓
+API Gateway
+        ↓
+Generate Upload URL (Lambda)
+        ↓
+S3 Upload Bucket
+        ↓
+Process CSV (Lambda)
+        ↓
+PostgreSQL (RDS)
+        ↓
+Match Users With Products
+        ↓
+Notify Users
+        ↓
+SES Email
+```
+This pipeline enables secure bulk ingestion of user data through presigned upload URLs.
+### Loan Discovery Pipeline
+```
+CloudWatch Scheduler
+        ↓
+discoverLoans (Python)
+        ↓
+persistDiscoveredProducts
+        ↓
+loan_products table
+```
+### System Architecture Diagram
+
+![Architecture](docs/architecture.png)
+## 🧰 Tech Stack
+
+### Cloud Infrastructure
+- Amazon Web Services (AWS)
+
+### Core Services
+- Amazon S3 – Static website hosting and CSV storage
+- Amazon API Gateway – API layer for frontend requests
+- AWS Lambda – Serverless compute for ingestion and processing
+- Amazon RDS (PostgreSQL) – Relational database for storing users and loan products
+- Amazon SES – Email notification service
+- Amazon CloudWatch – Scheduling and monitoring
+
+### Languages
+- Node.js – Backend services and Lambda functions
+- Python – Loan discovery pipeline
+- SQL – Database queries and schema management
+
+### Frameworks & Tools
+- Serverless Framework – Infrastructure as code and deployment
+- Git & GitHub – Version control and project hosting
+
+
+## 📁 Project Structure
+```
+loan-eligibility-engine
+│
+├── backend/
+│
+├── frontend/ 
+│   ├── index.html
+│   └── favicon.png
+│
+├── docs/ 
+│
+├── sample-data/ 
+│   └── users.csv
+│
+├── .env.example
+├── event_hdfc.json 
+├── event_icici.json
+│
+└── README.md # Project documentation
+```
+## 🧠 Design Principles
+
+- **Serverless-first architecture** for scalability and reduced operational overhead
+- **Event-driven processing** for asynchronous data ingestion
+- **Decoupled pipelines** to isolate ingestion and product discovery workflows
+- **Cloud-native services** to simplify infrastructure management
+  
+## ⚙️ Key Features
+* Secure CSV uploads via presigned S3 URLs
+
+* Serverless event-driven pipeline
+
+* Automated loan discovery
+
+* User-product eligibility matching
+
+* Automated email notifications
+
+* Fully cloud-native architecture
+
+## ▶️ Deployment
+Install dependencies:
+```
+npm install
+```
+Deploy infrastructure using:
 ```
 serverless deploy
 ```
 
-After running deploy, you should see output similar to:
+### 📬 Example Workflow
+- User uploads a CSV containing financial data
 
-```
-Deploying "aws-node" to stage "dev" (us-east-1)
+- System processes and stores users
 
-✔ Service deployed to stack aws-node-dev (90s)
+- Loan products are discovered via scheduled jobs
 
-functions:
-  hello: aws-node-dev-hello (1.5 kB)
-```
+- Matching engine finds eligible products
 
-### Invocation
+- Eligible users receive email notifications
 
-After successful deployment, you can invoke the deployed function by using the following command:
+### 🔮 Future Improvements
+* Real-time eligibility scoring
 
-```
-serverless invoke --function hello
-```
+* Credit risk model integration
 
-Which should result in response similar to the following:
+* Dashboard for loan analytics
 
-```json
-{
-  "statusCode": 200,
-  "body": "{\"message\":\"Go Serverless v4.0! Your function executed successfully!\"}"
-}
-```
+* Queue-based processing using SQS
+  
+### 👨‍💻 Author
+**Vikas Verma** 
 
-### Local development
+Backend Developer | Distributed Systems | Cloud Architecture
 
-The easiest way to develop and test your function is to use the Serverless Framework's `dev` command:
-
-```
-serverless dev
-```
-
-This will start a local emulator of AWS Lambda and tunnel your requests to and from AWS Lambda, allowing you to interact with your function as if it were running in the cloud.
-
-Now you can invoke the function as before, but this time the function will be executed locally. Now you can develop your function locally, invoke it, and see the results immediately without having to re-deploy.
-
-When you are done developing, don't forget to run `serverless deploy` to deploy the function to the cloud.
+GitHub: https://github.com/vikasxvrma
