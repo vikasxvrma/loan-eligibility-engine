@@ -157,4 +157,4 @@ serverless deploy
 
 Backend Developer | Distributed Systems | Cloud Architecture
 
-GitHub: https://github.com/vikasxvrma
+[GitHub](https://github.com/vikasxvrma) x [LinkedIn](https://www.linkedin.com/in/vikasxvrma/)
