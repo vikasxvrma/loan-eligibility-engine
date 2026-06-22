@@ -120,18 +120,6 @@ functions:
           path: /upload
           method: post
 
-  evaluateBatch:
-    handler: evaluateBatch.handler
-    vpc:
-      securityGroupIds:
-        - sg-05fe316b93849be70
-      subnetIds:
-        - subnet-0ad92b19b1600fbbb
-        - subnet-032c640de2eb1981b
-    events:
-      - httpApi:
-          path: /evaluate-batch
-          method: post
   discoverLoans:
     handler: discoverLoans.handler
     runtime: python3.11
